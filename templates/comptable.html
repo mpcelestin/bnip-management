@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-container">
+    <h2>COMPTABLE Dashboard</h2>
+    
+    <div class="report-form">
+        <h3>Submit New Report</h3>
+        <form method="POST" action="{{ url_for('comptable') }}" onsubmit="calculateRestant()">
+            <div class="form-group">
+                <label for="frais_entrant">FRAIS ENTRANT AUJOURDHUI (BIF):</label>
+                <input type="number" id="frais_entrant" name="frais_entrant" required oninput="calculateRestant()">
+            </div>
+            <div class="form-group">
+                <label for="frais_depenses">FRAIS DEPENSES AUJOURDHUI (BIF):</label>
+                <input type="number" id="frais_depenses" name="frais_depenses" required oninput="calculateRestant()">
+            </div>
+            <div class="form-group">
+                <label for="frais_restant">FRAIS RESTANT EN COMFRE (BIF):</label>
+                <input type="number" id="frais_restant" name="frais_restant" readonly required>
+            </div>
+            <button type="submit" class="btn">Envoyer le rapport</button>
+        </form>
+    </div>
+    
+    <div class="reports-history">
+        <h3>Your Reports History</h3>
+        <table class="reports-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Data</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="report-data">
+                        <div><strong>Frais Entrant:</strong> {{ report.data.frais_entrant }} BIF</div>
+                        <div><strong>Frais Dépensés:</strong> {{ report.data.frais_depenses }} BIF</div>
+                        <div><strong>Frais Restant:</strong> {{ report.data.frais_restant }} BIF</div>
+                    </td>
+                    <td>
+                        {% if report.date.date() == now.date() %}
+                        <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                        {% else %}
+                        <span class="disabled-action">Cannot edit</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function calculateRestant() {
+    const entrant = parseFloat(document.getElementById('frais_entrant').value) || 0;
+    const depenses = parseFloat(document.getElementById('frais_depenses').value) || 0;
+    const restant = entrant - depenses;
+    document.getElementById('frais_restant').value = restant.toFixed(2);
+}
+
+// Auto-calculate when inputs change
+document.getElementById('frais_entrant').addEventListener('input', calculateRestant);
+document.getElementById('frais_depenses').addEventListener('input', calculateRestant);
+</script>
+{% endblock %}

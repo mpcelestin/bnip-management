@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-container">
+    <h2>CHEF DE PRODUCTION Dashboard</h2>
+    
+    <div class="report-form">
+        <h3>Submit New Report</h3>
+        <form method="POST" action="{{ url_for('production') }}">
+            <div class="form-group">
+                <label for="type_produit">TYPE DE PRODUIT PRODUISE AUJOURD'HUI:</label>
+                <input type="text" id="type_produit" name="type_produit" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre_nouveau">NOMBRE TOTALE DE NOVEAU PRODUIT:</label>
+                <input type="number" id="nombre_nouveau" name="nombre_nouveau" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre_stock">NOMBRE TOTALE DE CE PRODUIT EN STOCK:</label>
+                <input type="number" id="nombre_stock" name="nombre_stock" required>
+            </div>
+            <button type="submit" class="btn">Envoyer le rapport</button>
+        </form>
+    </div>
+    
+    <div class="reports-history">
+        <h3>Your Reports History</h3>
+        <table class="reports-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Data</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="report-data">
+                        {% for key, value in report.data.items() %}
+                            <div><strong>{{ key }}:</strong> {{ value }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if report.date.date() == datetime.utcnow().date() %}
+                        <form action="{{ url_for('delete_report', report_id=report.id) }}" method="POST">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                        {% else %}
+                        <span class="disabled-action">Cannot edit</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

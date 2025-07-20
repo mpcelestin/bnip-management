@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="register-container">
+    <h2>Register</h2>
+    <form method="POST" action="{{ url_for('register') }}">
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" name="role" required>
+                <option value="">Select Role</option>
+                <option value="CHEF COMERCIAL">CHEF COMERCIAL</option>
+                <option value="CHEF DE PRODUCTION">CHEF DE PRODUCTION</option>
+                <option value="COMPTABLE">COMPTABLE</option>
+            </select>
+        </div>
+        <button type="submit" class="btn">Register</button>
+    </form>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+</div>
+{% endblock %}
