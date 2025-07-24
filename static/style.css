@@ -214,3 +214,63 @@ select {
 .btn-download:hover {
     background-color: #219653;
 }
+
+.btn-edit {
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.btn-edit:hover {
+    background-color: #2980b9;
+}
+
+.disabled-action {
+    color: #95a5a6;
+    font-style: italic;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.production-details {
+    margin-top: 10px;
+}
+
+.product-item {
+    margin: 10px 0;
+}
+
+.product-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.product-stats {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin: 5px 0;
+}
+
+.product-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 10px 0;
+}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-container">
+    <h2>Edit Commercial Report</h2>
+    
+    <div class="report-form">
+        <form method="POST" action="{{ url_for('edit_report', report_id=report.id) }}" onsubmit="calculateTotal()">
+            <div class="form-group">
+                <label for="type_produit">TYPE DE PRODUIT VENDUS AUJOURD'HUI:</label>
+                <input type="text" id="type_produit" name="type_produit" value="{{ report.data.type_produit }}" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre_produit">NOMBRE DE PRODUIT VENDUS AUJOURD'HUI:</label>
+                <input type="number" id="nombre_produit" name="nombre_produit" value="{{ report.data.nombre_produit }}" required>
+            </div>
+            <div class="form-group">
+                <label for="prix_unitaire">PRIX UNITAIRE (BIF):</label>
+                <input type="number" id="prix_unitaire" name="prix_unitaire" value="{{ report.data.prix_unitaire }}" required>
+            </div>
+            <div class="form-group">
+                <label for="valeur_total">VALEUR TOTAL EN BIF:</label>
+                <input type="number" id="valeur_total" name="valeur_total" value="{{ report.data.valeur_total }}" readonly required>
+            </div>
+            <button type="submit" class="btn">Update Report</button>
+            <a href="{{ url_for('commercial') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<script>
+function calculateTotal() {
+    const quantity = parseFloat(document.getElementById('nombre_produit').value) || 0;
+    const unitPrice = parseFloat(document.getElementById('prix_unitaire').value) || 0;
+    const totalValue = quantity * unitPrice;
+    document.getElementById('valeur_total').value = totalValue.toFixed(2);
+}
+
+// Auto-calculate when inputs change
+document.getElementById('nombre_produit').addEventListener('input', calculateTotal);
+document.getElementById('prix_unitaire').addEventListener('input', calculateTotal);
+
+// Calculate on page load
+window.addEventListener('load', calculateTotal);
+</script>
+{% endblock %}

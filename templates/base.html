@@ -18,11 +18,14 @@
                 {% endif %}
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
-                <a href="{{ url_for('register') }}">Register</a>
             {% endif %}
         </nav>
     </header>
-    
+    <!-- In the nav section of base.html -->
+{% if current_user.role == 'admin' %}
+    <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('manage_users') }}">Manage Users</a>
+{% endif %}
     <main>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -39,7 +42,7 @@
     
     <footer>
         <p>&copy; 2025 BNIP Management Official</p>
-        <p> CRAETED BY MPCelestin</p>
+        <p>CREATED BY MUGISHA</p>
     </footer>
     
     <script src="{{ url_for('static', filename='script.js') }}"></script>

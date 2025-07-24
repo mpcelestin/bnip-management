@@ -2,7 +2,51 @@
 
 {% block content %}
 <div class="admin-container">
-    <h2>Admin Dashboard - Worker Reports</h2>
+    <h2>Admin Dashboard</h2>
+    
+    <div class="admin-actions">
+        <a href="{{ url_for('create_user') }}" class="btn">Create New User</a>
+        <a href="{{ url_for('manage_users') }}" class="btn">Manage Users</a>
+    </div>
+
+    <!-- Company Status Overview -->
+    <div class="status-overview">
+        <h3>Company Status: 
+            <span class="status-{{ 'good' if company_status.status.startswith('GOOD') else 'bad' if company_status.status.startswith('BAD') else 'warning' }}">
+                {{ company_status.status }}
+            </span>
+        </h3>
+        
+        <div class="status-metrics">
+            <div class="metric-card">
+                <h4>Financial Health</h4>
+                <p class="metric-value">{{ "%.2f"|format(company_status.current_balance) }} BIF</p>
+                <p class="metric-detail">Income: {{ "%.2f"|format(company_status.total_income) }} BIF</p>
+                <p class="metric-detail">Expenses: {{ "%.2f"|format(company_status.total_expenses) }} BIF</p>
+            </div>
+            
+            <div class="metric-card">
+                <h4>Sales Performance</h4>
+                <p class="metric-value">{{ company_status.total_products_sold }} units</p>
+                <p class="metric-detail">{{ "%.2f"|format(company_status.total_sales) }} BIF</p>
+            </div>
+            
+            <div class="metric-card">
+                <h4>Production & Stock</h4>
+                <div class="production-details">
+                    {% for product, data in company_status.production_by_product.items() %}
+                    <div class="product-item">
+                        <p class="product-name">LE PRODUIT "{{ product }}" EST PRODUIT AUJOURD'HUI</p>
+                        <p class="product-stats">
+                            LE NOMBRE DE CE PRODUIT EN STOCK EST: {{ data.current_stock }}
+                        </p>
+                    </div>
+                    {% if not loop.last %}<hr class="product-divider">{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Financial Overview Section -->
     <div class="financial-summary">
@@ -45,9 +89,8 @@
                             <strong>Ventes:</strong> {{ report.data.nombre_produit }} x {{ report.data.type_produit }}<br>
                             <strong>Valeur:</strong> {{ report.data.valeur_total }} BIF
                         {% elif report.report_type == 'production' %}
-                            <strong>Produit:</strong> {{ report.data.type_produit }}<br>
-                            <strong>Nouveau:</strong> {{ report.data.nombre_nouveau }} | 
-                            <strong>Stock:</strong> {{ report.data.nombre_stock }}
+                            <strong>LE PRODUIT "{{ report.data.type_produit }}" EST PRODUIT AUJOURD'HUI</strong><br>
+                            <strong>LE NOMBRE DE CE PRODUIT EN STOCK EST:</strong> {{ report.data.nombre_stock }}
                         {% elif report.report_type == 'comptable' %}
                             <strong>Entrant:</strong> {{ report.data.frais_entrant }} BIF<br>
                             <strong>Dépenses:</strong> {{ report.data.frais_depenses }} BIF<br>
@@ -72,6 +115,96 @@
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.admin-actions {
+    margin-bottom: 20px;
+}
+
+.status-overview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border-left: 5px solid 
+        {% if company_status.status.startswith('GOOD') %}#2ecc71
+        {% elif company_status.status.startswith('BAD') %}#e74c3c
+        {% else %}#f39c12{% endif %};
+}
+
+.status-good {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+.status-bad {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.status-warning {
+    color: #f39c12;
+    font-weight: bold;
+}
+
+.status-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.metric-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-card h4 {
+    margin-top: 0;
+    color: #555;
+    font-size: 1rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 10px 0 5px;
+    color: #2c3e50;
+}
+
+.metric-detail {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin: 5px 0;
+}
+
+.production-details {
+    margin-top: 10px;
+}
+
+.product-item {
+    margin: 10px 0;
+}
+
+.product-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.product-stats {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin: 5px 0;
+}
+
+.product-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 10px 0;
 }
 
 .financial-summary {
@@ -160,9 +293,9 @@
     background-color: #c0392b;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
-    .financial-cards {
+    .financial-cards,
+    .status-metrics {
         grid-template-columns: 1fr;
     }
     

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-container">
+    <h2>Edit Production Report</h2>
+    
+    <div class="report-form">
+        <form method="POST" action="{{ url_for('edit_report', report_id=report.id) }}">
+            <div class="form-group">
+                <label for="type_produit">TYPE DE PRODUIT PRODUISE AUJOURD'HUI:</label>
+                <input type="text" id="type_produit" name="type_produit" value="{{ report.data.type_produit }}" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre_nouveau">NOMBRE TOTALE DE NOVEAU PRODUIT:</label>
+                <input type="number" id="nombre_nouveau" name="nombre_nouveau" value="{{ report.data.nombre_nouveau }}" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre_stock">NOMBRE TOTALE DE CE PRODUIT EN STOCK:</label>
+                <input type="number" id="nombre_stock" name="nombre_stock" value="{{ report.data.nombre_stock }}" required>
+            </div>
+            <button type="submit" class="btn">Update Report</button>
+            <a href="{{ url_for('production') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
