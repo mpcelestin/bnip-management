@@ -1,16 +1,45 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from sqlalchemy import func, cast, String, Integer
 import json
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bnip_db_user:VeImUSurECWvQ0QGHoGCVECmR7NnJKpg@dpg-d21hqengi27c73duf9rg-a.frankfurt-postgres.render.com/bnip_db'
+
+# Configuration - Use environment variables for production
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY',  'd29c234ca310aa6990092d4b6cd4c4854585c51e1f73bf4de510adca03f5bc4e')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://bnip_db_user:VeImUSurECWvQ0QGHoGCVECmR7NnJKpg@dpg-d21hqengi27c73duf9rg-a.frankfurt-postgres.render.com/bnip_db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Database Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+
+class Report(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    report_type = db.Column(db.String(50), nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    data = db.Column(db.JSON, nullable=False)
+    user = db.relationship('User', backref='reports')
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+    # Create admin user if none exists
+    if not User.query.filter_by(username='OSIAS CONTROLER').first():
+        admin = User(
+            username='OSIAS CONTROLER',
+            password='0220Osias',
+            role='admin'
+        )
+        db.session.add(admin)
+        db.session.commit()
 
 def calculate_company_status():
     commercial_reports = Report.query.join(User).filter(
@@ -25,11 +54,10 @@ def calculate_company_status():
         User.role == 'COMPTABLE'
     ).all()
     
-    # Calculate commercial metrics
+    # Calculate metrics
     total_sales = sum(float(r.data.get('valeur_total', 0)) for r in commercial_reports)
     total_products_sold = sum(int(r.data.get('nombre_produit', 0)) for r in commercial_reports)
     
-    # Calculate production metrics by product type
     production_by_product = {}
     for report in production_reports:
         product_type = report.data.get('type_produit', 'Unknown')
@@ -41,12 +69,11 @@ def calculate_company_status():
         production_by_product[product_type]['total_produced'] += int(report.data.get('nombre_nouveau', 0))
         production_by_product[product_type]['current_stock'] = int(report.data.get('nombre_stock', 0))
     
-    # Calculate financial metrics
     total_income = sum(float(r.data.get('frais_entrant', 0)) for r in comptable_reports)
     total_expenses = sum(float(r.data.get('frais_depenses', 0)) for r in comptable_reports)
     current_balance = total_income - total_expenses
     
-    # Determine overall status
+    # Determine status
     status = "GOOD"
     if current_balance < 0:
         status = "BAD (Negative Balance)"
@@ -64,26 +91,6 @@ def calculate_company_status():
         'total_expenses': total_expenses,
         'current_balance': current_balance
     }
-
-
-
-
-# Database Models
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
-
-class Report(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    report_type = db.Column(db.String(50), nullable=False)
-    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    data = db.Column(db.JSON, nullable=False)
-    user = db.relationship('User', backref='reports')
-
-# Create tables
 
 # Context processors
 @app.context_processor
@@ -160,7 +167,6 @@ def admin_dashboard():
         flash('Unauthorized access', 'danger')
         return redirect(url_for('login'))
 
-    # Get all non-admin users and their reports
     workers = User.query.filter(User.role != 'admin').all()
     user_reports = {}
     
@@ -170,7 +176,6 @@ def admin_dashboard():
             'reports': Report.query.filter_by(user_id=worker.id).order_by(Report.date.desc()).all()
         }
 
-    # Calculate financial totals only from comptable reports
     comptable_reports = Report.query.join(User).filter(
         User.role == 'COMPTABLE'
     ).all()
@@ -181,7 +186,6 @@ def admin_dashboard():
         'total_restant': sum(float(r.data.get('frais_restant', 0)) for r in comptable_reports)
     }
     
-    # Calculate company status
     company_status = calculate_company_status()
 
     return render_template(
@@ -191,6 +195,7 @@ def admin_dashboard():
         company_status=company_status
     )
 
+# Role-specific routes (commercial, production, comptable)
 @app.route('/commercial', methods=['GET', 'POST'])
 def commercial():
     if 'user_id' not in session or session.get('role') != 'CHEF COMERCIAL':
@@ -218,7 +223,7 @@ def commercial():
         flash('Report submitted successfully!', 'success')
         return redirect(url_for('commercial'))
     
-    reports = Report.query.options(db.joinedload(Report.user)).filter_by(
+    reports = Report.query.filter_by(
         user_id=session['user_id'],
         report_type='commercial'
     ).order_by(Report.date.desc()).all()
@@ -247,7 +252,7 @@ def production():
         flash('Report submitted successfully!', 'success')
         return redirect(url_for('production'))
     
-    reports = Report.query.options(db.joinedload(Report.user)).filter_by(
+    reports = Report.query.filter_by(
         user_id=session['user_id'],
         report_type='production'
     ).order_by(Report.date.desc()).all()
@@ -280,13 +285,14 @@ def comptable():
         flash('Report submitted successfully!', 'success')
         return redirect(url_for('comptable'))
     
-    reports = Report.query.options(db.joinedload(Report.user)).filter_by(
+    reports = Report.query.filter_by(
         user_id=session['user_id'],
         report_type='comptable'
     ).order_by(Report.date.desc()).all()
     
     return render_template('comptable.html', reports=reports)
 
+# Report and User Management
 @app.route('/delete_report/<int:report_id>', methods=['POST'])
 def delete_report(report_id):
     if 'user_id' not in session:
@@ -306,8 +312,6 @@ def delete_report(report_id):
         flash('You are not authorized to delete this report', 'danger')
     
     return redirect(request.referrer or url_for('home'))
-
-# Add these new routes to app.py (place them with the other routes)
 
 @app.route('/admin/users')
 def manage_users():
@@ -330,7 +334,6 @@ def edit_user(user_id):
         user.username = request.form['username']
         user.role = request.form['role']
         
-        # Only update password if a new one was provided
         if request.form['password']:
             user.password = request.form['password']
         
@@ -347,11 +350,7 @@ def delete_user(user_id):
         return redirect(url_for('login'))
     
     user = User.query.get_or_404(user_id)
-    
-    # First delete all reports by this user
     Report.query.filter_by(user_id=user_id).delete()
-    
-    # Then delete the user
     db.session.delete(user)
     db.session.commit()
     
@@ -359,4 +358,4 @@ def delete_user(user_id):
     return redirect(url_for('manage_users'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'False') == 'True')
