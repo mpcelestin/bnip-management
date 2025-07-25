@@ -6,8 +6,9 @@ import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bnip.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bnip_db_user:VeImUSurECWvQ0QGHoGCVECmR7NnJKpg@dpg-d21hqengi27c73duf9rg-a.frankfurt-postgres.render.com/bnip_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 
@@ -83,12 +84,6 @@ class Report(db.Model):
     user = db.relationship('User', backref='reports')
 
 # Create tables
-with app.app_context():
-    db.create_all()
-    if not User.query.filter_by(username='OSIAS CONTROLER').first():
-        admin = User(username='OSIAS CONTROLER', password='0220Osias', role='admin')
-        db.session.add(admin)
-        db.session.commit()
 
 # Context processors
 @app.context_processor
